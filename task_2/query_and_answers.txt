@@ -1,0 +1,28 @@
+1. QUERY:
+    SELECT one.airport_name, two.airport_name, max(one.coordinates <@> two.coordinates) AS distance 
+    FROM airports_data AS one, airports_data AS two
+    GROUP BY one.airport_name, two.airport_name
+    ORDER BY distance DESC
+    LIMIT 1;
+ANSWER:
+    "{""en"": ""Yelizovo Airport"", ""ru"": ""Елизово""}"   "{""en"": ""Sochi International Airport"", ""ru"": ""Сочи""}"   4833.21613827686
+
+2. QUERY:
+    SELECT model, count(seat_no) AS num_seats 
+    FROM aircrafts_data INNER JOIN seats ON aircrafts_data.aircraft_code = seats.aircraft_code 
+    GROUP BY model 
+    ORDER BY num_seats DESC 
+    LIMIT 1;
+ANSWER:
+    "{""en"": ""Boeing 777-300"", ""ru"": ""Боинг 777-300""}"   402
+
+3. QUERY:
+    WITH exact_aircraft as (
+        SELECT aircrafts_data.aircraft_code, count(seat_no) AS num_seats 
+        FROM aircrafts_data INNER JOIN seats ON aircrafts_data.aircraft_code = seats.aircraft_code 
+        GROUP BY aircrafts_data.aircraft_code 
+        ORDER BY num_seats DESC 
+        LIMIT 1
+    )
+
+    select seat_no, RANK() OVER(ORDER BY seat_no) from seats, exact_aircraft where seats.aircraft_code = exact_aircraft.aircraft_code and fare_conditions = 'Economy';
