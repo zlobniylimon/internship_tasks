@@ -22,7 +22,7 @@ async def producer(id, overflow_condition, underflow_condition):
         await warehouse_lock.acquire()
         if not is_overflow():
             warehouse.append(x)
-            print('Coroutine {} produced number {}'.format(id, x))
+            print('Producer {} produced number {}'.format(id, x))
             warehouse_lock.release()
         else:
             async with overflow_condition:
@@ -40,7 +40,7 @@ async def consumer(id, overflow_condition, underflow_condition):
         await warehouse_lock.acquire()
         if not is_underflow():
             x = warehouse.pop(0)
-            print('Coroutine {} consumed number {}'.format(id, x))
+            print('Consumer {} consumed number {}'.format(id, x))
             warehouse_lock.release()
         else:
             async with underflow_condition:
@@ -54,25 +54,19 @@ async def consumer(id, overflow_condition, underflow_condition):
 
 async def main():
 
-
-
     overflow_condition = Condition()
 
     underflow_condition = Condition()
 
-
-    async with overflow_condition:
-        overflow_condition.notify_all()
-
     tasks = []
 
     for i in range(10):
-        tasks.append(producer(i, overflow_condition, underflow_condition))
+        tasks.append(asyncio.create_task(producer(i, overflow_condition, underflow_condition)))
 
     for i in range(2):
-        tasks.append(consumer(i, overflow_condition, underflow_condition))
+        tasks.append(asyncio.create_task(consumer(i, overflow_condition, underflow_condition)))
 
-    await asyncio.gather(*tasks)
+    await tasks[0]
 
 
 if __name__=="__main__":
